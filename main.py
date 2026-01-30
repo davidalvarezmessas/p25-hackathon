@@ -178,40 +178,46 @@ class Mouton(Grid):
 
 #classe pour le comportement du loup, son age, sa position et son énergie
 class Loup(Grid):
-    def __init__(self, position, energie, age, taille_grille):
+    def __init__(self, position, energie, age):
         self.position = position 
         
         self.energie = energie
         self.age = age
         self.vivant = True
 
-    def se_deplacer(self):
-        if not self.vivant :
-            return
-        (x,y) = self.position 
-        x = self.position[0]
-        y = self.position[1]
-        deplacement = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        dx, dy = random.choice(deplacement)
-        new_x = x + dx
-        new_y = y + dy
-        if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE:
-            self.x = new_x
-            self.y = new_y
-
-        self.energie -= WOLF_ENERGY_LOSS_PER_TURN
-        self.age += 1
-
-        if self.energie <= 0:
-            self.vivant = False
-        if self.age >= WOLF_MAX_AGE:
-            self.vivant = False   
-
+    def deplacer(self):
+        (x,y)= self.position
+        if Grid.has_sheep((x+1,y)):
+            self.position = (x+1,y)
+        elif Grid.has_sheep((x-1,y)):
+            self.position = (x-1,y)
+        elif Grid.has_sheep((x,y+1)):
+            self.position = (x,y+1)
+        elif Grid.has_sheep((x,y-1)):
+            self.position = (x,y-1)
+        else:
+            self.position = Grid.radjacent(self.position)
+   
+    def mort(self):
+        return self.energie <= 0 or self.age > SHEEP_MAX_AGE
+    
     def reproduire(self):
         if self.energie >= WOLF_REPRODUCTION_THRESHOLD :
             self.energie -= REPRODUCTION_ENERGY_COST 
-            return Loup(Grid.radjacent(self.position), WOLF_INITIAL_ENERGY, 0)
-
+            newposition = Grid.radjacent(self.position)
+            Grid.add_wolf(newposition)
+            return Loup(newposition, WOLF_INITIAL_ENERGY, 0)
+    def chasser(self):
+        (x,y) = self.position
+        if Grid.has_sheep((x+1,y)):
+            Grid.remove_sheep((x+1,y))
+        if Grid.has_sheep((x-1,y)):  
+            Grid.remove_sheep((x-1,y))      
+        if Grid.has_sheep((x,y+1)):
+            Grid.remove_sheep((x,y+1))   
+        if Grid.has_sheep((x,y-1)): 
+            Grid.remove_sheep((x,y-1))        
+            
     
 
 
