@@ -85,6 +85,14 @@ class Grid:
                 adjacent_positions.remove(pos)
         return random.choice(adjacent_positions)
     
+    def list_without_grass(self):
+        positions=[]
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.cells[x][y]['grass']:
+                    positions.append((x,y))
+        return positions
+        
     def has_grass(self,position):
         (x,y)= position
         return self.cells[x][y]['grass']
@@ -121,9 +129,7 @@ class Grid:
         (x,y)= position
         self.cells[x][y]['wolf']=True
     
-
-        
-
+    
 class Mouton(Grid):
     def __init__(self, position, energie, age):
         self.position = position
