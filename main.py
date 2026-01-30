@@ -217,11 +217,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
     def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
-        # Affichage du nombre de moutons et de loups dans un encadré
-        font = pygame.font.SysFont(None, 28)
-        sheep_count = len(self.sheep)
-        wolf_count = len(self.wolves)
-        text = font.render(f"Moutons : {sheep_count}   Loups : {wolf_count}", True, (255, 255, 255))
+
         # Dessine un rectangle de fond
         pygame.draw.rect(screen, (40, 40, 40), (10, 10, text.get_width() + 20, 40), border_radius=8)
         screen.blit(text, (20, 20))
@@ -235,6 +231,12 @@ class Simulation: #Classe qui gère la simulation tour par tour
             screen.blit(sheep_img, (s.position[0]*cell_size, s.position[1]*cell_size))
         for w in self.wolves:
             screen.blit(wolf_img, (w.position[0]*cell_size, w.position[1]*cell_size))
+
+                # Affichage du nombre de moutons et de loups dans un encadré
+        font = pygame.font.SysFont(None, 28)
+        sheep_count = len(self.sheep)
+        wolf_count = len(self.wolves)
+        text = font.render(f"Moutons : {sheep_count}   Loups : {wolf_count}", True, (255, 255, 255))
 
 if __name__ == "__main__":
     args = parse_args()
