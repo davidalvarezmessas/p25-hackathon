@@ -257,7 +257,7 @@ if __name__ == "__main__":
         if len(sim.sheep) > 0 or len(sim.wolves) > 0:
             sim.step()
         
-        sim.draw(screen, CELL_SIZE, w_img, s_img)
+        sim.draw_simulation(screen, CELL_SIZE, w_img, s_img)
         pygame.display.flip()
         clock.tick(10) # 10 tours par seconde
         
