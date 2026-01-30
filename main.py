@@ -141,13 +141,16 @@ class Grid:
     
 #classe pour le comportement du mouton, son age, sa. position et son énergie 
 class Mouton:
+    """Classe représentant un mouton dans l'écosystème."""
     def __init__(self, position, energie, age):
         self.position = position
         self.energie = energie
         self.age = age
+
     def mort(self,args):
         """Vérifie si le mouton est mort."""
         return self.energie <= 0 or self.age > args.sheep_max_age
+    
     def reproduire(self,grid,args):
         """Fait reproduire le mouton s'il a assez d'énergie."""
         if self.energie >= args.sheep_reproduction_threshold:
@@ -155,12 +158,14 @@ class Mouton:
             newposition = grid.radjacent(self.position)
             return Mouton(newposition, args.sheep_initial_energy, 0)
         return None
+    
     def manger(self,grid,args):
         """Fait manger le mouton s'il y a de l'herbe à sa position."""
         if grid.has_grass(self.position):
             self.energie += args.sheep_energy_from_grass
             grid.remove_grass(self.position)
             return (self.position,1)
+        
     def deplacer(self, grid):
         """Déplace le mouton vers une position adjacente contenant de l'herbe, ou aléatoirement si aucune herbe n'est adjacente."""
         (x, y) = self.position
@@ -189,6 +194,7 @@ class Mouton:
 
 #classe pour le comportement du loup, son age, sa position et son énergie
 class Loup:
+    """Classe représentant un loup dans l'écosystème."""
     def __init__(self, position, energie, age):
         self.position = position
         self.energie = energie
@@ -254,6 +260,7 @@ class Loup:
 
 #classe pour le comportement de l'herbe, sa présence et sa position
 class Grass:
+    """Classe représentant de l'herbe dans l'écosystème."""
     def __init__(self, position):
         self.position = position
         self.presence = 1  # 1 si l'herbe est présente, 0 sinon
@@ -267,6 +274,7 @@ class Grass:
                 grid.add_grass(position)
 
 class Simulation: #Classe qui gère la simulation tour par tour
+    """Classe gérant la simulation de l'écosystème."""
     def __init__(self, grid, args):
         self.grid=grid
         self.steps_max=args.max_turns
