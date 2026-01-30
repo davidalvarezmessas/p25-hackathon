@@ -214,9 +214,9 @@ class Loup:
         self.position = new_pos
         grid.add_wolf(self.position)
 
-    def mort(self, args):
+    def mort(self, wolf_max_age):
         """Vérifie si le loup est mort."""
-        return self.energie <= 0 or self.age > args.wolf_max_age
+        return self.energie <= 0 or self.age > wolf_max_age
 
     def reproduire(self, grid, wolf_reproduction_threshold, reproduction_energy_cost, wolf_initial_energy):
         """Fait reproduire le loup s'il a assez d'énergie."""
@@ -227,21 +227,24 @@ class Loup:
             return Loup(newposition, wolf_initial_energy, 0)
 
     def chasser(self, grid, args):
-        """Fait chasser le loup s'il y a un mouton adjacent."""
+        """Le loup mange au plus un mouton adjacent par tour et se déplace sur sa case."""
         (x, y) = self.position
         size = grid.size
-        if x + 1 < size and grid.has_sheep((x + 1, y)):
-            grid.remove_sheep((x + 1, y))
-            self.energie += args.wolf_energy_from_sheep
-        if x - 1 >= 0 and grid.has_sheep((x - 1, y)):
-            grid.remove_sheep((x - 1, y))
-            self.energie += args.wolf_energy_from_sheep
-        if y + 1 < size and grid.has_sheep((x, y + 1)):
-            grid.remove_sheep((x, y + 1))
-            self.energie += args.wolf_energy_from_sheep
-        if y - 1 >= 0 and grid.has_sheep((x, y - 1)):
-            grid.remove_sheep((x, y - 1))
-            self.energie += args.wolf_energy_from_sheep
+        directions = [
+            (x + 1, y),
+            (x - 1, y),
+            (x, y + 1),
+            (x, y - 1)
+        ]
+        for nx, ny in directions:
+            if 0 <= nx < size and 0 <= ny < size and grid.has_sheep((nx, ny)):
+                grid.remove_wolf(self.position)
+                grid.remove_sheep((nx, ny))
+                self.energie += args.wolf_energy_from_sheep
+                self.position = (nx, ny)
+                grid.add_wolf(self.position)
+                return (nx, ny)  # retourne la position du mouton mangé
+        return None
 
     def draw(self, screen) : 
         rect = self.wolf_img.get_rect(self.position)
@@ -325,7 +328,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
         return herbe_mangee
     
     def action_wolves(self, args):
-        """Fait agir les loups : chasse, déplacement et perte d'énergie."""
+        """Fait agir les loups : chasse, déplacement et perte d'énergie. Un loup ne mange qu'un mouton par tour et se déplace sur sa case."""
         moutons_manges = set()
         for wolf in self.wolves:
             pos_mouton_mange = wolf.chasser(self.grid, args)
@@ -334,13 +337,13 @@ class Simulation: #Classe qui gère la simulation tour par tour
             else:
                 wolf.deplacer(self.grid)
             wolf.energie -= args.wolf_energy_loss_per_turn
-        # Retirer les moutons mangés de la liste des moutons vivants
+        # Retirer les moutons mangés de la liste des moutons vivants (évite les moutons zombies)
         self.sheep = [sheep for sheep in self.sheep if sheep.position not in moutons_manges]
 
-    def remove_dead(self,args):
+    def remove_dead(self, args):
         """Retire les moutons et loups morts de la simulation."""
-        self.sheep=[sheep for sheep in self.sheep if not sheep.mort(args)]
-        self.wolves=[wolf for wolf in self.wolves if not wolf.mort(args)]
+        self.sheep = [sheep for sheep in self.sheep if not sheep.mort(args)]
+        self.wolves = [wolf for wolf in self.wolves if not wolf.mort(args.wolf_max_age)]
 
     def reproduce(self,args):
         """Fait reproduire les moutons et les loups."""
