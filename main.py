@@ -2,6 +2,7 @@ import numpy as np
 import random
 import argparse
 import pygame
+import sys
 wolf_img = pygame.image.load("loup.jpeg")
 sheep_img = pygame.image.load("mouton.jpeg")
 wolf_img = pygame.transform.scale(wolf_img, (24, 24))
@@ -402,11 +403,6 @@ class Simulation: #Classe qui gère la simulation tour par tour
             print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
 
     #DESSIN 
-    def draw(self, screen):
-        """Dessine l'herbe à sa position sur l'écran."""
-        if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
-            pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
-    
     def draw(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
