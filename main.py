@@ -206,9 +206,9 @@ class Loup:
         self.position = new_pos
         grid.add_wolf(self.position)
 
-    def mort(self, wolf_max_age):
+    def mort(self, args):
         """Vérifie si le loup est mort."""
-        return self.energie <= 0 or self.age > wolf_max_age
+        return self.energie <= 0 or self.age > args.wolf_max_age
 
     def reproduire(self, grid, wolf_reproduction_threshold, reproduction_energy_cost, wolf_initial_energy):
         """Fait reproduire le loup s'il a assez d'énergie."""
