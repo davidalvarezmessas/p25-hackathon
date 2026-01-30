@@ -98,35 +98,46 @@ class Mouton(Grid):
 
 
     
-print("hello le hackaton")
+
 
 import random
 
-class Loup:
-    def __init__(self, x, y, taille_grille):
-        self.x = x
-        self.y = y
-        self.taille_grille = taille_grille
-        self.energie = 40
-        self.age = 0
+class Loup(Grid):
+    def __init__(self, position, energie, age, taille_grille):
+        self.position = position 
+        
+        self.energie = energie
+        self.age = age
         self.vivant = True
 
     def se_deplacer(self):
         if self.vivant == False :
             return
+        (x,y) = self.position 
+        x = self.position[0]
+        y = self.position[1]
         deplacement = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         dx, dy = random.choice(deplacement)
-        new_x = self.x + dx
-        new_y = self.y + dy
-        if 0 <= new_x < self.taille_grille and 0 <= new_y < self.taille_grille:
+        new_x = x + dx
+        new_y = y + dy
+        if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE:
             self.x = new_x
             self.y = new_y
 
-        self.energie -= 2
+        self.energie -= WOLF_ENERGY_LOSS_PER_TURN
         self.age += 1
 
         if self.energie <= 0:
             self.vivant = False
-        if self.age >= 40:
-            self.vivant = False    
+        if self.age >= WOLF_MAX_AGE:
+            self.vivant = False   
+
+    def reproduire(self):
+        if self.energie >= WOLF_REPRODUCTION_THRESHOLD :
+            self.energie -= REPRODUCTION_ENERGY_COST 
+            return Loup(Grid.radjacent(self.position), WOLF_INITIAL_ENERGY, 0)
+
+    
+
+
 
