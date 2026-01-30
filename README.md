@@ -24,7 +24,7 @@ project/
 │── main.py
 │── README.md
 
-## Fonctionnalités et Utilisation 
+## Fonctionnalités 
 
 L'utilisateur peut jouer sur la simulation en changeant certains paramètres : 
 - Nombre intial des moutons et des loups
@@ -35,5 +35,8 @@ L'utilisateur peut jouer sur la simulation en changeant certains paramètres :
 Il est ainsi possible de construire un éco-système qui soit plus ou moins enclins aux moutons ou aux loups. 
 
 
+## Utilisation 
+
+Pour lancer la simulation : 
 
 
