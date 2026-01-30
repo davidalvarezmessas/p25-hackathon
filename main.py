@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import argparse
+import pygame
 
 #Consignes : 
 #moutons broutent l'herbe
@@ -222,19 +223,6 @@ class Loup:
             
     
 
-<<<<<<< HEAD
-        self.energie -= 2
-        self.age += 1
-
-        if self.energie <= 0:
-            self.vivant = False
-        if self.age >= 40:
-            self.vivant = False    
-    
-    def draw(self, screen) : 
-            pygame.draw.square(screen, (120, 120, 120), (int(self.x), int(self.y)))
-=======
->>>>>>> 07383886936b436ba78b49ee4a37803799fb6033
 
 #classe pour le comportement de l'herbe, sa présence et sa position
 class Grass():
