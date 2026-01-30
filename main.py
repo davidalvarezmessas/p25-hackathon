@@ -66,12 +66,15 @@ GRASS_REGROWTH_TIME=7
 #simulation
 MAX_TURNS=500
 
+#classe qui gère la grille 
 class Grid:
+    """Classe représentant la grille de l'écosystème."""
     def __init__(self, size):
         self.size=size
         self.cells=[[{'grass':False, 'sheep':False, 'wolf':False} for _ in range(size)] for _ in range(size)]
     
     def radjacent(self,position):
+        """Renvoie une position adjacente aléatoire vide."""
         (x,y)= position
         adjacent_positions=[]
         if x>0:
@@ -83,11 +86,12 @@ class Grid:
         if y<self.size-1:
             adjacent_positions.append((x,y+1))
         for pos in adjacent_positions:
-            if self.cells[pos[0]][pos[1]]['sheep'] == True or self.cells[pos[0]][pos[1]]['wolf'] == True:
+            if self.cells[pos[0]][pos[1]]['sheep'] or self.cells[pos[0]][pos[1]]['wolf']:
                 adjacent_positions.remove(pos)
         return random.choice(adjacent_positions)
     
     def list_without_grass(self):
+        """Renvoie une liste de positions sans herbe."""
         positions=[]
         for x in range(self.size):
             for y in range(self.size):
@@ -96,42 +100,51 @@ class Grid:
         return positions
         
     def has_grass(self,position):
+        """Vérifie si une position contient de l'herbe."""
         (x,y)= position
         return self.cells[x][y]['grass']
     
     def has_sheep(self,position):
+        """Vérifie si une position contient un mouton."""
         (x,y)= position
         return self.cells[x][y]['sheep']
     
     def has_wolf(self,position):
+        """Vérifie si une position contient un loup."""
         (x,y)= position
         return self.cells[x][y]['wolf']
     
     def remove_grass(self,position):
+        """Retire l'herbe d'une position."""
         (x,y)= position
         self.cells[x][y]['grass']=False
 
     def remove_sheep(self,position):
+        """Retire un mouton d'une position."""
         (x,y)= position
         self.cells[x][y]['sheep']=False
     
     def remove_wolf(self,position):
+        """Retire un loup d'une position."""
         (x,y)= position
         self.cells[x][y]['wolf']=False
 
     def add_grass(self,position):
+        """Ajoute de l'herbe à une position."""
         (x,y)= position
         self.cells[x][y]['grass']=True
 
     def add_sheep(self,position):
+        """Ajoute un mouton à une position."""
         (x,y)= position
         self.cells[x][y]['sheep']=True
 
     def add_wolf(self,position):
+        """Ajoute un loup à une position."""
         (x,y)= position
         self.cells[x][y]['wolf']=True
     
-    
+#classe pour le comportement du mouton, son age, sa. position et son énergie 
 class Mouton(Grid):
     def __init__(self, position, energie, age):
         self.position = position
@@ -163,6 +176,7 @@ class Mouton(Grid):
         else:
             self.position = Grid.radjacent(self.position)
 
+#classe pour le comportement du loup, son age, sa position et son énergie
 class Loup(Grid):
     def __init__(self, position, energie, age, taille_grille):
         self.position = position 
@@ -172,7 +186,7 @@ class Loup(Grid):
         self.vivant = True
 
     def se_deplacer(self):
-        if self.vivant == False :
+        if not self.vivant :
             return
         (x,y) = self.position 
         x = self.position[0]
@@ -201,7 +215,7 @@ class Loup(Grid):
     
 
 
-
+#classe pour le comportement de l'herbe, sa présence et sa position
 class Grass():
     def __init__(self, presence, x, y):
         self.presence = presence
