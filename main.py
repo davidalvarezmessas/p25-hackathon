@@ -391,11 +391,6 @@ class Simulation: #Classe qui gère la simulation tour par tour
             print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
 
     #DESSIN 
-    def draw(self, screen):
-        """Dessine l'herbe à sa position sur l'écran."""
-        if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
-            pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
-    
     def draw(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
