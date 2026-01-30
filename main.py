@@ -207,6 +207,7 @@ class Loup(Grid):
             newposition = Grid.radjacent(self.position)
             Grid.add_wolf(newposition)
             return Loup(newposition, WOLF_INITIAL_ENERGY, 0)
+        return None
     def chasser(self):
         (x,y) = self.position
         if Grid.has_sheep((x+1,y)):
