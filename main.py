@@ -78,7 +78,9 @@ class Mouton(Grid):
     def reproduire(self):
         if self.energie >= SHEEP_REPRODUCTION_THRESHOLD:
             self.energie -= REPRODUCTION_ENERGY_COST
-            return Mouton(Grid.radjacent(self.position), SHEEP_INITIAL_ENERGY, 0)
+            newposition = Grid.radjacent(self.position)
+            Grid.add_sheep(newposition)
+            return Mouton(newposition, SHEEP_INITIAL_ENERGY, 0)
         return None
     def manger(self):
         if Grid.has_grass(self.position):
@@ -133,7 +135,7 @@ class Grass():
 
     # CHANGER EN FONCTION DU CODE DE LA GRILLE 
     def __pousse_aléatoire__(self,GRASS_GROWTH_PROBABILITY):
-        x = np.random.radnt(0,100)
+        x = np.randlist(Grid.list_without_grass())
         y = np.random.radnt(0,100)
         
         self.x = x
