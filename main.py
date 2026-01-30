@@ -60,27 +60,32 @@ class Grid:
     def add_wolf(self, pos): self.cells[pos[0]][pos[1]]['wolf'] = True
 
 class Mouton:
+    """Classe représentant un mouton dans l'écosystème."""
     def __init__(self, position, energie, age):
-        self.position, self.energie, self.age = position, energie, age
+        self.position = position
+        self.energie = energie
+        self.age = age
 
-    def mort(self, args):
+    def mort(self,args):
+        """Vérifie si le mouton est mort."""
         return self.energie <= 0 or self.age > args.sheep_max_age
-
-    def reproduire(self, grid, args):
+    
+    def reproduire(self,grid,args):
+        """Fait reproduire le mouton s'il a assez d'énergie."""
         if self.energie >= args.sheep_reproduction_threshold:
             self.energie -= args.reproduction_energy_cost
             new_pos = grid.radjacent(self.position)
             if new_pos != self.position:
                 return Mouton(new_pos, args.sheep_initial_energy, 0)
         return None
-
-    def manger(self, grid, args):
+    
+    def manger(self,grid,args):
+        """Fait manger le mouton s'il y a de l'herbe à sa position."""
         if grid.has_grass(self.position):
             self.energie += args.sheep_energy_from_grass
             grid.remove_grass(self.position)
-            return True
-        return False
-
+            return (self.position,1)
+        
     def deplacer(self, grid):
         x, y = self.position
         targets = []
@@ -95,6 +100,7 @@ class Mouton:
         grid.add_sheep(self.position)
 
 class Loup:
+    """Classe représentant un loup dans l'écosystème."""
     def __init__(self, position, energie, age):
         self.position, self.energie, self.age = position, energie, age
 
@@ -127,7 +133,29 @@ class Loup:
                 return (nx, ny)
         return None
 
-class Simulation:
+    def draw(self, screen) : 
+        rect = self.wolf_img.get_rect(self.position)
+        screen.blit(self.wolf_img, rect)   
+    
+
+
+#classe pour le comportement de l'herbe, sa présence et sa position
+class Grass:
+    """Classe représentant de l'herbe dans l'écosystème."""
+    def __init__(self, position):
+        self.position = position
+        self.presence = 1  # 1 si l'herbe est présente, 0 sinon
+
+    def pousse_aleatoire(self, grid, growth_probability):
+        """Fait pousser de l'herbe aléatoirement sur la grille."""
+        positions_sans_herbe = grid.list_without_grass()
+        if positions_sans_herbe:
+            position = random.choice(positions_sans_herbe)
+            if random.random() < growth_probability:
+                grid.add_grass(position)
+
+class Simulation: #Classe qui gère la simulation tour par tour
+    """Classe gérant la simulation de l'écosystème."""
     def __init__(self, grid, args):
         self.grid, self.args, self.current_step = grid, args, 0
         self.sheep, self.wolves = [], []
@@ -185,8 +213,11 @@ class Simulation:
         for b in new_w: self.grid.add_wolf(b.position)
         self.wolves.extend(new_w)
 
-    def draw(self, screen, cell_size, wolf_img, sheep_img):
-        screen.fill((30, 30, 30))
+    #DESSIN 
+    def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
+        screen.fill((30, 30, 30))  # fond sombre
+
+        # Dessiner l'herbe
         for x in range(self.grid.size):
             for y in range(self.grid.size):
                 if self.grid.has_grass((x, y)):
