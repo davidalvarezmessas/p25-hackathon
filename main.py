@@ -2,6 +2,11 @@ import numpy as np
 import random
 import argparse
 import pygame
+wolf_img = pygame.image.load("loup.jpeg")
+sheep_img = pygame.image.load("mouton.jpeg")
+wolf_img = pygame.transform.scale(wolf_img, (24, 24))
+sheep_img = pygame.transform.scale(sheep_img, (20, 20))
+
 
 #Consignes : 
 #moutons broutent l'herbe
@@ -167,7 +172,8 @@ class Mouton:
             self.position = grid.radjacent(self.position)
 
     def draw(self, screen) : 
-        pygame.draw.circle(screen, (240, 240, 240), (int(self.x), int(self.y)))
+        rect = self.wolf_img.get_rect(self.position)
+        screen.blit(self.wolf_img, rect) 
 
 class Loup:
     def __init__(self, position, energie, age):
@@ -214,7 +220,10 @@ class Loup:
         if y - 1 >= 0 and grid.has_sheep((x, y - 1)):
             grid.remove_sheep((x, y - 1))
             self.energie += args.wolf_energy_from_sheep
-            
+
+    def draw(self, screen) : 
+        rect = self.wolf_img.get_rect(self.position)
+        screen.blit(self.wolf_img, rect)   
     
 
 
@@ -333,10 +342,37 @@ class Simulation: #Classe qui gère la simulation tour par tour
         except KeyboardInterrupt:
             print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
 
-    
+    #DESSIN 
     def draw(self, screen):
         if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
             pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
+    
+    def draw(self, screen, cell_size, wolf_img, sheep_img):
+    screen.fill((30, 30, 30))  # fond sombre
+
+    # Dessiner l'herbe
+    for x in range(self.grid.size):
+        for y in range(self.grid.size):
+            if self.grid.has_grass((x, y)):
+                pygame.draw.rect(screen, (50, 200, 50),
+                                 (x*cell_size, y*cell_size, cell_size, cell_size))
+
+    # Dessiner les moutons
+    for sheep in self.sheep:
+        pos = sheep.position
+        rect = sheep_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
+                                          pos[1]*cell_size + cell_size//2))
+        screen.blit(sheep_img, rect)
+
+    # Dessiner les loups
+    for wolf in self.wolves:
+        pos = wolf.position
+        rect = wolf_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
+                                        pos[1]*cell_size + cell_size//2))
+        screen.blit(wolf_img, rect)
+
+    pygame.display.flip()
+
 
 if __name__ == "__main__":
     args = parse_args()
