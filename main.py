@@ -199,16 +199,21 @@ class Loup:
             grid.add_wolf(newposition)
             return Loup(newposition, wolf_initial_energy, 0)
 
-    def chasser(self, grid):
+    def chasser(self, grid, args):
         (x, y) = self.position
-        if grid.has_sheep((x+1, y)):
-            grid.remove_sheep((x+1, y))
-        if grid.has_sheep((x-1, y)):
-            grid.remove_sheep((x-1, y))
-        if grid.has_sheep((x, y+1)):
-            grid.remove_sheep((x, y+1))
-        if grid.has_sheep((x, y-1)):
-            grid.remove_sheep((x, y-1))    
+        size = grid.size
+        if x + 1 < size and grid.has_sheep((x + 1, y)):
+            grid.remove_sheep((x + 1, y))
+            self.energie += args.wolf_energy_from_sheep
+        if x - 1 >= 0 and grid.has_sheep((x - 1, y)):
+            grid.remove_sheep((x - 1, y))
+            self.energie += args.wolf_energy_from_sheep
+        if y + 1 < size and grid.has_sheep((x, y + 1)):
+            grid.remove_sheep((x, y + 1))
+            self.energie += args.wolf_energy_from_sheep
+        if y - 1 >= 0 and grid.has_sheep((x, y - 1)):
+            grid.remove_sheep((x, y - 1))
+            self.energie += args.wolf_energy_from_sheep
             
     
 
@@ -278,14 +283,14 @@ class Simulation: #Classe qui gère la simulation tour par tour
     def action_wolves(self,args):
             for wolf in self.wolves:
                 wolf.deplacer(self.grid)
-                wolf.chasser(self.grid)
+                wolf.chasser(self.grid,args)
                 wolf.energie -= args.wolf_energy_loss_per_turn
 
-    def remove_dead(self):
+    def remove_dead(self,args):
         self.sheep=[sheep for sheep in self.sheep if sheep.energie > 0 and sheep.age <= args.sheep_max_age]
         self.wolves=[wolf for wolf in self.wolves if wolf.energie > 0 and wolf.age <= args.wolf_max_age]
 
-    def reproduce(self):
+    def reproduce(self,args):
         new_sheep = []
         for sheep in self.sheep:
             baby_sheep = sheep.reproduire(self.grid, args)
@@ -314,8 +319,8 @@ class Simulation: #Classe qui gère la simulation tour par tour
         self.grass_growth(args)
         self.action_sheep(args)
         self.action_wolves(args)
-        self.remove_dead()
-        self.reproduce()
+        self.remove_dead(args)
+        self.reproduce(args)
         #self.affichage()
 
     def run(self, args):
