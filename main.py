@@ -217,6 +217,15 @@ class Simulation: #Classe qui gère la simulation tour par tour
     def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
+        # Affichage du nombre de moutons et de loups dans un encadré
+        font = pygame.font.SysFont(None, 28)
+        sheep_count = len(self.sheep)
+        wolf_count = len(self.wolves)
+        text = font.render(f"Moutons : {sheep_count}   Loups : {wolf_count}", True, (255, 255, 255))
+        # Dessine un rectangle de fond
+        pygame.draw.rect(screen, (40, 40, 40), (10, 10, text.get_width() + 20, 40), border_radius=8)
+        screen.blit(text, (20, 20))
+
         # Dessiner l'herbe
         for x in range(self.grid.size):
             for y in range(self.grid.size):
