@@ -403,7 +403,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
             print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
 
     #DESSIN 
-    def draw(self, screen, cell_size, wolf_img, sheep_img):
+    def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
         # Dessiner l'herbe
