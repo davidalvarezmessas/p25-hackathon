@@ -97,6 +97,9 @@ class Mouton(Grid):
         else:
             self.position = Grid.radjacent(self.position)
 
+    def draw(self, screen) : 
+        pygame.draw.circle(screen, (240, 240, 240), (int(self.x), int(self.y)))
+
 class Loup:
     def __init__(self, x, y, taille_grille):
         self.x = x
@@ -124,6 +127,9 @@ class Loup:
             self.vivant = False
         if self.age >= 40:
             self.vivant = False    
+    
+    def draw(self, screen) : 
+            pygame.draw.square(screen, (120, 120, 120), (int(self.x), int(self.y)))
 
 class Grass():
     def __init__(self, presence, x, y):
@@ -140,3 +146,7 @@ class Grass():
         self.y = y 
         if self.presence == 0:
             self.presence = np.random.binomial(1, GRASS_GROWTH_PROBABILITY)
+    
+    def draw(self, screen):
+        if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
+            pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
