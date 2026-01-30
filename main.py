@@ -99,6 +99,22 @@ class Grid:
                 if not self.cells[x][y]['grass']:
                     positions.append((x,y))
         return positions
+    
+    def list_without_sheep(self):
+        positions=[]
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.cells[x][y]['sheep']:
+                    positions.append((x,y))
+        return positions
+    
+    def list_without_wolf(self):
+        positions=[]
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.cells[x][y]['wolf']:
+                    positions.append((x,y))
+        return positions
         
     def has_grass(self,position):
         """Vérifie si une position contient de l'herbe."""
@@ -144,6 +160,11 @@ class Grid:
         """Ajoute un loup à une position."""
         (x,y)= position
         self.cells[x][y]['wolf']=True
+
+    def step(self):
+        # Logique de mise à jour de la grille à chaque étape
+        new_grid=[[cell.copy() for cell in row] for row in self.cells]
+        for x in range(self.size):
     
 #classe pour le comportement du mouton, son age, sa. position et son énergie 
 class Mouton:
@@ -240,6 +261,94 @@ class Grass():
         self.y = y 
         if self.presence == 0:
             self.presence = np.random.binomial(1, GRASS_GROWTH_PROBABILITY)
+
+class Simulation: #Classe qui gère la simulation tour par tour
+    def __init__(self, grid, args):
+        self.grid=grid
+        self.steps_max=args.max_turns
+        self.current_step=0
+        self.sheep=[]
+        self.wolves=[]
+        
+    def grid_init(self,args):
+        #initialisation de l'herbe
+        coverage=0
+        while coverage < args.grass_coverage: 
+            x=random.randint(0,self.grid.size-1)
+            y=random.randint(0,self.grid.size-1)
+            if not self.grid.cells[x][y]['grass']:
+                self.grid.add_grass((x,y))
+                coverage += 1/self.grid.size**2
+        for i in range(args.initial_sheep):
+                position=random.choice(self.grid.list_without_sheep())
+                new_sheep=Mouton(position,args.sheep_energy,args.sheep_reproduction_age,args.sheep_reproduction_energy)
+                self.sheep.append(new_sheep)
+                self.grid.add_sheep(position)
+        #initialisation des moutons
+
+    def age(self):
+        for sheep in self.sheep:
+            sheep.age += 1
+        for wolf in self.wolves:
+            wolf.age += 1
+    
+    def grass_growth(self,args):
+        for x in range(self.grid.size):
+            for y in range(self.grid.size):
+                if not self.grid.cells[x][y]['grass']:
+                    if random.random() < args.grass_growth_probability :  # Probabilité de croissance de l'herbe
+                        self.grid.add_grass((x,y))
+                                            
+    def action_sheep(self,args):
+         for sheep in self.sheep:
+            sheep.deplacer(self.grid)
+            sheep.manger(self.grid)
+            sheep.energie -= args.sheep_energy_loss_per_turn
+    
+    def action_wolves(self,args):
+         for wolf in self.wolves:
+            wolf.deplacer(self.grid)
+            wolf.chasser(self.grid)
+            wolf.energie -= args.wolf_energy_loss_per_turn
+
+    def remove_dead(self):
+        self.sheep=[sheep for sheep in self.sheep if sheep.energie > 0 and sheep.age <= sheep.max_age]
+        self.wolves=[wolf for wolf in self.wolves if wolf.energie > 0 and wolf.age <= wolf.max_age]
+
+    def reproduce(self):
+        new_sheep=[]
+        for sheep in self.sheep:
+            baby_sheep=sheep.reproduire(self.grid)
+            new_sheep.append(baby_sheep)
+        self.sheep.extend(new_sheep)
+
+        new_wolves=[]
+        for wolf in self.wolves:
+            baby_wolf=wolf.reproduire(self.grid)
+            new_wolves.append(baby_wolf)
+        self.wolves.extend(new_wolves)
+
+    #faire l'affichage
+    def step(self,args):
+        self.current_step+=1
+        self.age()
+        self.grass_growth(args)
+        self.action_sheep(args)
+        self.action_wolves(args)
+        self.remove_dead()
+        self.reproduce()
+        #self.affichage()
+
+    def run(self):
+        try:
+            while self.current_step < self.steps_max:
+                if not self.sheep and not self.wolves:
+                    print("Tous les moutons et loups sont morts. Arrêt de la simulation.")
+                    break
+                self.step()
+        except KeyboardInterrupt:
+            print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
+
     
     def draw(self, screen):
         if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
