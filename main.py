@@ -64,7 +64,65 @@ GRASS_REGROWTH_TIME=7
 #simulation
 MAX_TURNS=500
 
+class Grid:
+    def __init__(self, size):
+        self.size=size
+        self.cells=[[{'grass':False, 'sheep':False, 'wolf':False} for _ in range(size)] for _ in range(size)]
+    
+    def radjacent(self,position):
+        (x,y)= position
+        adjacent_positions=[]
+        if x>0:
+            adjacent_positions.append((x-1,y))
+        if x<self.size-1:
+            adjacent_positions.append((x+1,y))
+        if y>0:
+            adjacent_positions.append((x,y-1))
+        if y<self.size-1:
+            adjacent_positions.append((x,y+1))
+        for pos in adjacent_positions:
+            if self.cells[pos[0]][pos[1]]['sheep'] == True or self.cells[pos[0]][pos[1]]['wolf'] == True:
+                adjacent_positions.remove(pos)
+        return random.choice(adjacent_positions)
+    
+    def has_grass(self,position):
+        (x,y)= position
+        return self.cells[x][y]['grass']
+    
+    def has_sheep(self,position):
+        (x,y)= position
+        return self.cells[x][y]['sheep']
+    
+    def has_wolf(self,position):
+        (x,y)= position
+        return self.cells[x][y]['wolf']
+    
+    def remove_grass(self,position):
+        (x,y)= position
+        self.cells[x][y]['grass']=False
 
+    def remove_sheep(self,position):
+        (x,y)= position
+        self.cells[x][y]['sheep']=False
+    
+    def remove_wolf(self,position):
+        (x,y)= position
+        self.cells[x][y]['wolf']=False
+
+    def add_grass(self,position):
+        (x,y)= position
+        self.cells[x][y]['grass']=True
+
+    def add_sheep(self,position):
+        (x,y)= position
+        self.cells[x][y]['sheep']=True
+
+    def add_wolf(self,position):
+        (x,y)= position
+        self.cells[x][y]['wolf']=True
+    
+
+        
 
 class Mouton(Grid):
     def __init__(self, position, energie, age):
@@ -129,4 +187,3 @@ class Loup:
             self.vivant = False
         if self.age >= 40:
             self.vivant = False    
-
