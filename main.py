@@ -175,7 +175,6 @@ class Mouton:
         else:
             self.position = grid.radjacent(self.position)
 
-<<<<<<< HEAD
     def draw(self, screen) : 
         pygame.draw.circle(screen, (240, 240, 240), (int(self.x), int(self.y)))
 
@@ -186,15 +185,6 @@ class Loup:
         self.taille_grille = taille_grille
         self.energie = 40
         self.age = 0
-=======
-#classe pour le comportement du loup, son age, sa position et son énergie
-class Loup:
-    def __init__(self, position, energie, age):
-        self.position = position 
-        
-        self.energie = energie
-        self.age = age
->>>>>>> 07383886936b436ba78b49ee4a37803799fb6033
         self.vivant = True
 
     def deplacer(self,grid):
