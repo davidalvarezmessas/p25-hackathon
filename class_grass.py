@@ -16,7 +16,7 @@ class Grass():
         
         self.x = x
         self.y = y 
-        if self.presence = 0
+        if self.presence == 0
             self.presence = np.random.binomial(1, GRASS_GROWTH_PROBABILITY)
 
     
