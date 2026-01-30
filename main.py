@@ -162,6 +162,9 @@ class Mouton(Grid):
             self.position = (x,y-1)
         else:
             self.position = Grid.radjacent(self.position)
+    
+    def draw(self, screen):
+        pygame.draw.circle(screen, (200, 50, 50), (position))
 
 class Loup(Grid):
     def __init__(self, position, energie, age, taille_grille):
