@@ -159,17 +159,21 @@ class Mouton:
     def deplacer(self, grid):
         (x, y) = self.position
         size = grid.size
-        # On vérifie les bornes avant de tester la présence d'herbe
+        # Détermine la nouvelle position
         if x + 1 < size and grid.has_grass((x + 1, y)):
-            self.position = (x + 1, y)
+            new_pos = (x + 1, y)
         elif x - 1 >= 0 and grid.has_grass((x - 1, y)):
-            self.position = (x - 1, y)
+            new_pos = (x - 1, y)
         elif y + 1 < size and grid.has_grass((x, y + 1)):
-            self.position = (x, y + 1)
+            new_pos = (x, y + 1)
         elif y - 1 >= 0 and grid.has_grass((x, y - 1)):
-            self.position = (x, y - 1)
+            new_pos = (x, y - 1)
         else:
-            self.position = grid.radjacent(self.position)
+            new_pos = grid.radjacent(self.position)
+        # Mise à jour de la grille
+        grid.remove_sheep(self.position)
+        self.position = new_pos
+        grid.add_sheep(self.position)
 
     def draw(self, screen) : 
         rect = self.wolf_img.get_rect(self.position)
@@ -184,16 +188,21 @@ class Loup:
     def deplacer(self, grid):
         (x, y) = self.position
         size = grid.size
+        # Détermine la nouvelle position
         if x + 1 < size and grid.has_sheep((x + 1, y)):
-            self.position = (x + 1, y)
+            new_pos = (x + 1, y)
         elif x - 1 >= 0 and grid.has_sheep((x - 1, y)):
-            self.position = (x - 1, y)
+            new_pos = (x - 1, y)
         elif y + 1 < size and grid.has_sheep((x, y + 1)):
-            self.position = (x, y + 1)
+            new_pos = (x, y + 1)
         elif y - 1 >= 0 and grid.has_sheep((x, y - 1)):
-            self.position = (x, y - 1)
+            new_pos = (x, y - 1)
         else:
-            self.position = grid.radjacent(self.position)
+            new_pos = grid.radjacent(self.position)
+        # Mise à jour de la grille
+        grid.remove_wolf(self.position)
+        self.position = new_pos
+        grid.add_wolf(self.position)
 
     def mort(self, wolf_max_age):
         return self.energie <= 0 or self.age > wolf_max_age
@@ -289,11 +298,17 @@ class Simulation: #Classe qui gère la simulation tour par tour
             sheep.manger(self.grid,args)
             sheep.energie -= args.sheep_energy_loss_per_turn
     
-    def action_wolves(self,args):
-            for wolf in self.wolves:
+    def action_wolves(self, args):
+        moutons_manges = set()
+        for wolf in self.wolves:
+            pos_mouton_mange = wolf.chasser(self.grid, args)
+            if pos_mouton_mange is not None:
+                moutons_manges.add(pos_mouton_mange)
+            else:
                 wolf.deplacer(self.grid)
-                wolf.chasser(self.grid,args)
-                wolf.energie -= args.wolf_energy_loss_per_turn
+            wolf.energie -= args.wolf_energy_loss_per_turn
+        # Retirer les moutons mangés de la liste des moutons vivants
+        self.sheep = [sheep for sheep in self.sheep if sheep.position not in moutons_manges]
 
     def remove_dead(self,args):
         self.sheep=[sheep for sheep in self.sheep if sheep.energie > 0 and sheep.age <= args.sheep_max_age]
