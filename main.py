@@ -145,36 +145,35 @@ class Grid:
         self.cells[x][y]['wolf']=True
     
 #classe pour le comportement du mouton, son age, sa. position et son énergie 
-class Mouton(Grid):
+class Mouton:
     def __init__(self, position, energie, age):
         self.position = position
         self.energie = energie
         self.age = age
     def mort(self):
         return self.energie <= 0 or self.age > SHEEP_MAX_AGE
-    def reproduire(self):
+    def reproduire(self,grid):
         if self.energie >= SHEEP_REPRODUCTION_THRESHOLD:
             self.energie -= REPRODUCTION_ENERGY_COST
-            newposition = Grid.radjacent(self.position)
-            Grid.add_sheep(newposition)
+            newposition = grid.radjacent(self.position)
             return Mouton(newposition, SHEEP_INITIAL_ENERGY, 0)
         return None
-    def manger(self):
-        if Grid.has_grass(self.position):
+    def manger(self,grid):
+        if grid.has_grass(self.position):
             self.energie += SHEEP_ENERGY_FROM_GRASS
-            Grid.remove_grass(self.position)
-    def deplacer(self):
+            grid.remove_grass(self.position)
+    def deplacer(self,grid):
         (x,y)= self.position
-        if Grid.has_grass((x+1,y)):
+        if grid.has_grass((x+1,y)):
             self.position = (x+1,y)
-        elif Grid.has_grass((x-1,y)):
+        elif grid.has_grass((x-1,y)):
             self.position = (x-1,y)
-        elif Grid.has_grass((x,y+1)):
+        elif grid.has_grass((x,y+1)):
             self.position = (x,y+1)
-        elif Grid.has_grass((x,y-1)):
+        elif grid.has_grass((x,y-1)):
             self.position = (x,y-1)
         else:
-            self.position = Grid.radjacent(self.position)
+            self.position = grid.radjacent(self.position)
 
 <<<<<<< HEAD
     def draw(self, screen) : 
@@ -189,7 +188,7 @@ class Loup:
         self.age = 0
 =======
 #classe pour le comportement du loup, son age, sa position et son énergie
-class Loup(Grid):
+class Loup:
     def __init__(self, position, energie, age):
         self.position = position 
         
@@ -198,38 +197,38 @@ class Loup(Grid):
 >>>>>>> 07383886936b436ba78b49ee4a37803799fb6033
         self.vivant = True
 
-    def deplacer(self):
+    def deplacer(self,grid):
         (x,y)= self.position
-        if Grid.has_sheep((x+1,y)):
+        if grid.has_sheep((x+1,y)):
             self.position = (x+1,y)
-        elif Grid.has_sheep((x-1,y)):
+        elif grid.has_sheep((x-1,y)):
             self.position = (x-1,y)
-        elif Grid.has_sheep((x,y+1)):
+        elif grid.has_sheep((x,y+1)):
             self.position = (x,y+1)
-        elif Grid.has_sheep((x,y-1)):
+        elif grid.has_sheep((x,y-1)):
             self.position = (x,y-1)
         else:
-            self.position = Grid.radjacent(self.position)
+            self.position = grid.radjacent(self.position)
    
     def mort(self):
         return self.energie <= 0 or self.age > SHEEP_MAX_AGE
     
-    def reproduire(self):
+    def reproduire(self,grid):
         if self.energie >= WOLF_REPRODUCTION_THRESHOLD :
             self.energie -= REPRODUCTION_ENERGY_COST 
-            newposition = Grid.radjacent(self.position)
-            Grid.add_wolf(newposition)
+            newposition = grid.radjacent(self.position)
+            grid.add_wolf(newposition)
             return Loup(newposition, WOLF_INITIAL_ENERGY, 0)
-    def chasser(self):
+    def chasser(self,grid):
         (x,y) = self.position
-        if Grid.has_sheep((x+1,y)):
-            Grid.remove_sheep((x+1,y))
-        if Grid.has_sheep((x-1,y)):  
-            Grid.remove_sheep((x-1,y))      
-        if Grid.has_sheep((x,y+1)):
-            Grid.remove_sheep((x,y+1))   
-        if Grid.has_sheep((x,y-1)): 
-            Grid.remove_sheep((x,y-1))        
+        if grid.has_sheep((x+1,y)):
+            grid.remove_sheep((x+1,y))
+        if grid.has_sheep((x-1,y)):  
+            grid.remove_sheep((x-1,y))      
+        if grid.has_sheep((x,y+1)):
+            grid.remove_sheep((x,y+1))   
+        if grid.has_sheep((x,y-1)): 
+            grid.remove_sheep((x,y-1))        
             
     
 
@@ -255,8 +254,8 @@ class Grass():
         self.y = y 
 
     # CHANGER EN FONCTION DU CODE DE LA GRILLE 
-    def __pousse_aléatoire__(self,GRASS_GROWTH_PROBABILITY):
-        x = np.randlist(Grid.list_without_grass())
+    def __pousse_aléatoire__(self,grid):
+        x = np.randlist(grid.list_without_grass())
         y = np.random.radnt(0,100)
         
         self.x = x
