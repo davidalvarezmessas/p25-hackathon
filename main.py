@@ -1,4 +1,6 @@
-print("hello le hackaton")
+import numpy as np
+import random
+import argparse
 
 #Consignes : 
 #moutons broutent l'herbe
@@ -12,7 +14,6 @@ print("hello le hackaton")
 #loup : se déplace aléatoirement en priorité sur les cases avec des moutons, mange les moutons et gagne de l'énergie
 #énergie > seuil : se reproduit, perd 20 d'énergie et crée un loup sur une case adjacente
 
-import argparse
 
 def parse_args():
     parser=argparse.ArgumentParser(description="Simulation d'écosystème avec moutons, loups et herbe.")
@@ -34,6 +35,7 @@ def parse_args():
     parser.add_argument('-gp','--grass-growth-probability',type=float,default=0.08, help="Taux de croissance de l'herbe par tour")
     parser.add_argument('-t','--max-turns',type=int,default=500, help="Nombre maximum de tours de la simulation")
     return parser.parse_args()
+
 #config initiale
 GRID_SIZE = 30
 INITIAL_SHEEP= 50
@@ -157,14 +159,7 @@ class Mouton(Grid):
         elif Grid.has_grass((x,y-1)):
             self.position = (x,y-1)
         else:
-        self.position = Grid.radjacent(self.position)
-
-
-
-    
-print("hello le hackaton")
-
-import random
+            self.position = Grid.radjacent(self.position)
 
 class Loup:
     def __init__(self, x, y, taille_grille):
@@ -193,3 +188,19 @@ class Loup:
             self.vivant = False
         if self.age >= 40:
             self.vivant = False    
+
+class Grass():
+    def __init__(self, presence, x, y):
+        self.presence = presence
+        self.x = x
+        self.y = y 
+
+    # CHANGER EN FONCTION DU CODE DE LA GRILLE 
+    def __pousse_aléatoire__(self,GRASS_GROWTH_PROBABILITY):
+        x = np.random.radnt(0,100)
+        y = np.random.radnt(0,100)
+        
+        self.x = x
+        self.y = y 
+        if self.presence == 0:
+            self.presence = np.random.binomial(1, GRASS_GROWTH_PROBABILITY)
