@@ -2,6 +2,7 @@ import numpy as np
 import random
 import argparse
 import pygame
+import sys
 wolf_img = pygame.image.load("loup.jpeg")
 sheep_img = pygame.image.load("mouton.jpeg")
 wolf_img = pygame.transform.scale(wolf_img, (24, 24))
