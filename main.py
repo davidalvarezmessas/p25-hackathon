@@ -384,30 +384,29 @@ class Simulation: #Classe qui gère la simulation tour par tour
             pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
     
     def draw(self, screen, cell_size, wolf_img, sheep_img):
-    screen.fill((30, 30, 30))  # fond sombre
+        screen.fill((30, 30, 30))  # fond sombre
 
-    # Dessiner l'herbe
-    for x in range(self.grid.size):
-        for y in range(self.grid.size):
-            if self.grid.has_grass((x, y)):
-                pygame.draw.rect(screen, (50, 200, 50),
+        # Dessiner l'herbe
+        for x in range(self.grid.size):
+            for y in range(self.grid.size):
+                if self.grid.has_grass((x, y)):
+                    pygame.draw.rect(screen, (50, 200, 50),
                                  (x*cell_size, y*cell_size, cell_size, cell_size))
 
-    # Dessiner les moutons
-    for sheep in self.sheep:
-        pos = sheep.position
-        rect = sheep_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
+        # Dessiner les moutons
+        for sheep in self.sheep:
+            pos = sheep.position
+            rect = sheep_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
                                           pos[1]*cell_size + cell_size//2))
-        screen.blit(sheep_img, rect)
+            screen.blit(sheep_img, rect)
 
-    # Dessiner les loups
-    for wolf in self.wolves:
-        pos = wolf.position
-        rect = wolf_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
-                                        pos[1]*cell_size + cell_size//2))
-        screen.blit(wolf_img, rect)
+        # Dessiner les loups
+        for wolf in self.wolves:
+            pos = wolf.position
+            rect = wolf_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
+                                            pos[1]*cell_size + cell_size//2))
+            screen.blit(wolf_img, rect)
 
-    pygame.display.flip()
 
 
 if __name__ == "__main__":
@@ -425,3 +424,31 @@ if __name__ == "__main__":
             print("Tous les animaux sont morts. Fin de la simulation.")
             break
     print("Simulation terminée.")
+
+
+pygame.init()
+
+# Fenêtre
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Écosystème")
+
+clock = pygame.time.Clock()
+FPS = 60
+
+# Boucle principale
+running = True
+while running:
+    clock.tick(FPS)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((30, 30, 30))  # fond sombre
+
+    pygame.display.flip()
+
+
+pygame.quit()
+sys.exit()
