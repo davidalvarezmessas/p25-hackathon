@@ -85,6 +85,7 @@ class Grid:
         return positions
     
     def list_without_wolf(self):
+        """Renvoie une liste de positions sans loup."""
         positions=[]
         for x in range(self.size):
             for y in range(self.size):
@@ -145,18 +146,22 @@ class Mouton:
         self.energie = energie
         self.age = age
     def mort(self,args):
+        """Vérifie si le mouton est mort."""
         return self.energie <= 0 or self.age > args.sheep_max_age
     def reproduire(self,grid,args):
+        """Fait reproduire le mouton s'il a assez d'énergie."""
         if self.energie >= args.sheep_reproduction_threshold:
             self.energie -= args.reproduction_energy_cost
             newposition = grid.radjacent(self.position)
             return Mouton(newposition, args.sheep_initial_energy, 0)
         return None
     def manger(self,grid,args):
+        """Fait manger le mouton s'il y a de l'herbe à sa position."""
         if grid.has_grass(self.position):
             self.energie += args.sheep_energy_from_grass
             grid.remove_grass(self.position)
     def deplacer(self, grid):
+        """Déplace le mouton vers une position adjacente contenant de l'herbe, ou aléatoirement si aucune herbe n'est adjacente."""
         (x, y) = self.position
         size = grid.size
         # Détermine la nouvelle position
@@ -176,9 +181,12 @@ class Mouton:
         grid.add_sheep(self.position)
 
     def draw(self, screen) : 
+        """Dessine le mouton à sa position sur l'écran."""
+        pygame.draw.circle(screen, (240, 240, 240), (int(self.x), int(self.y)))
         rect = self.wolf_img.get_rect(self.position)
         screen.blit(self.wolf_img, rect) 
 
+#classe pour le comportement du loup, son age, sa position et son énergie
 class Loup:
     def __init__(self, position, energie, age):
         self.position = position
@@ -186,6 +194,7 @@ class Loup:
         self.age = age
 
     def deplacer(self, grid):
+        """Déplace le loup vers une position adjacente contenant un mouton, ou aléatoirement si aucun mouton n'est adjacent."""
         (x, y) = self.position
         size = grid.size
         # Détermine la nouvelle position
@@ -204,10 +213,12 @@ class Loup:
         self.position = new_pos
         grid.add_wolf(self.position)
 
-    def mort(self, wolf_max_age):
-        return self.energie <= 0 or self.age > wolf_max_age
+    def mort(self, args):
+        """Vérifie si le loup est mort."""
+        return self.energie <= 0 or self.age > args.wolf_max_age
 
     def reproduire(self, grid, wolf_reproduction_threshold, reproduction_energy_cost, wolf_initial_energy):
+        """Fait reproduire le loup s'il a assez d'énergie."""
         if self.energie >= wolf_reproduction_threshold:
             self.energie -= reproduction_energy_cost
             newposition = grid.radjacent(self.position)
@@ -215,6 +226,7 @@ class Loup:
             return Loup(newposition, wolf_initial_energy, 0)
 
     def chasser(self, grid, args):
+        """Fait chasser le loup s'il y a un mouton adjacent."""
         (x, y) = self.position
         size = grid.size
         if x + 1 < size and grid.has_sheep((x + 1, y)):
@@ -280,12 +292,14 @@ class Simulation: #Classe qui gère la simulation tour par tour
         #initialisation des moutons
 
     def age(self):
+        """Incrémente l'âge des moutons et des loups."""
         for sheep in self.sheep:
             sheep.age += 1
         for wolf in self.wolves:
             wolf.age += 1
     
     def grass_growth(self,args):
+        """Fait pousser de l'herbe aléatoirement sur la grille."""
         for x in range(self.grid.size):
             for y in range(self.grid.size):
                 if not self.grid.cells[x][y]['grass']:
@@ -293,12 +307,14 @@ class Simulation: #Classe qui gère la simulation tour par tour
                         self.grid.add_grass((x,y))
                                             
     def action_sheep(self,args):
-         for sheep in self.sheep:
+        """Fait agir les moutons : déplacement, alimentation et perte d'énergie."""
+        for sheep in self.sheep:
             sheep.deplacer(self.grid)
             sheep.manger(self.grid,args)
             sheep.energie -= args.sheep_energy_loss_per_turn
     
     def action_wolves(self, args):
+        """Fait agir les loups : chasse, déplacement et perte d'énergie."""
         moutons_manges = set()
         for wolf in self.wolves:
             pos_mouton_mange = wolf.chasser(self.grid, args)
@@ -311,10 +327,12 @@ class Simulation: #Classe qui gère la simulation tour par tour
         self.sheep = [sheep for sheep in self.sheep if sheep.position not in moutons_manges]
 
     def remove_dead(self,args):
-        self.sheep=[sheep for sheep in self.sheep if sheep.energie > 0 and sheep.age <= args.sheep_max_age]
-        self.wolves=[wolf for wolf in self.wolves if wolf.energie > 0 and wolf.age <= args.wolf_max_age]
+        """Retire les moutons et loups morts de la simulation."""
+        self.sheep=[sheep for sheep in self.sheep if not sheep.mort(args)]
+        self.wolves=[wolf for wolf in self.wolves if not wolf.mort(args)]
 
     def reproduce(self,args):
+        """Fait reproduire les moutons et les loups."""
         new_sheep = []
         for sheep in self.sheep:
             baby_sheep = sheep.reproduire(self.grid, args)
@@ -338,6 +356,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
 
     #faire l'affichage
     def step(self,args):
+        """Effectue un tour de la simulation."""
         self.current_step+=1
         self.age()
         self.grass_growth(args)
@@ -348,6 +367,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
         #self.affichage()
 
     def run(self, args):
+        """Lance la simulation jusqu'à la fin ou interruption."""
         try:
             while self.current_step < self.steps_max:
                 if not self.sheep and not self.wolves:
@@ -359,6 +379,7 @@ class Simulation: #Classe qui gère la simulation tour par tour
 
     #DESSIN 
     def draw(self, screen):
+        """Dessine l'herbe à sa position sur l'écran."""
         if self.presence == 1 :                 # on colorie que s'il y a de l'herbe
             pygame.draw.rect(screen, (50, 200, 50), (self.x, self.y))
     
