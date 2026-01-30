@@ -3,144 +3,62 @@ import random
 import argparse
 import pygame
 import sys
-wolf_img = pygame.image.load("loup.jpeg")
-sheep_img = pygame.image.load("mouton.jpeg")
-wolf_img = pygame.transform.scale(wolf_img, (24, 24))
-sheep_img = pygame.transform.scale(sheep_img, (20, 20))
-
-
-#Consignes : 
-#moutons broutent l'herbe
-#loups mangent les moutons
-#herbe pousse aléatoirement sur la grille
-#Grille taille n*n
-#case : vide, herbe, un animal, herbe + un animal
-#Mouton : énergie baisse à chaque tour, se déplace aléatoirement en priorité sur l'herbe, sur l'herbe mangent et gagnent de l'énergie
-#si énergie > 50  : se reproduit, perd 20 d'énergie et crée un mouton avec 20 d'énergie sur une case adjacente
-#si énergie = 0 ou age > limite : meurt
-#loup : se déplace aléatoirement en priorité sur les cases avec des moutons, mange les moutons et gagne de l'énergie
-#énergie > seuil : se reproduit, perd 20 d'énergie et crée un loup sur une case adjacente
-
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Simulation d'écosystème avec moutons, loups et herbe.")
-    parser.add_argument('-g', '--grid_size', type=int, default=30, help="Longueur de la grille")
-    parser.add_argument('-s', '--initial_sheep', type=int, default=50, help="Nombre initial de moutons")
-    parser.add_argument('-w', '--initial_wolves', type=int, default=10, help="Nombre initial de loups")
-    parser.add_argument('-gc', '--initial_grass_coverage', type=float, default=0.3, help="Proportion initiale d'herbe")
-    parser.add_argument('-se', '--sheep_initial_energy', type=int, default=20, help="Énergie initiale des moutons")
-    parser.add_argument('-we', '--wolf_initial_energy', type=int, default=40, help="Énergie initiale des loups")
-    parser.add_argument('-seg', '--sheep_energy_from_grass', type=int, default=15, help="Énergie gagnée par les moutons en mangeant de l'herbe")
-    parser.add_argument('-wes', '--wolf_energy_from_sheep', type=int, default=35, help="Énergie gagnée par les loups en mangeant des moutons")
-    parser.add_argument('-sel', '--sheep_energy_loss_per_turn', type=int, default=1, help="Énergie perdue par les moutons à chaque tour")
-    parser.add_argument('-wel', '--wolf_energy_loss_per_turn', type=int, default=2, help="Énergie perdue par les loups à chaque tour")
-    parser.add_argument('-srt', '--sheep_reproduction_threshold', type=int, default=50, help="Seuil d'énergie pour la reproduction des moutons")
-    parser.add_argument('-wrt', '--wolf_reproduction_threshold', type=int, default=80, help="Seuil d'énergie pour la reproduction des loups")
-    parser.add_argument('-rec', '--reproduction_energy_cost', type=int, default=20, help="Coût en énergie pour la reproduction")
-    parser.add_argument('-sma', '--sheep_max_age', type=int, default=50, help="Durée de vie maximale des moutons")
-    parser.add_argument('-wma', '--wolf_max_age', type=int, default=40, help="Durée de vie maximale des loups")
-    parser.add_argument('-ggp', '--grass_growth_probability', type=float, default=0.08, help="Taux de croissance de l'herbe par tour")
-    parser.add_argument('-mt', '--max_turns', type=int, default=500, help="Nombre maximum de tours de la simulation")
+    parser = argparse.ArgumentParser(description="Simulation d'écosystème.")
+    parser.add_argument('-g', '--grid_size', type=int, default=30)
+    parser.add_argument('-s', '--initial_sheep', type=int, default=50)
+    parser.add_argument('-w', '--initial_wolves', type=int, default=10)
+    parser.add_argument('-gc', '--initial_grass_coverage', type=float, default=0.2)
+    parser.add_argument('-se', '--sheep_initial_energy', type=int, default=20)
+    parser.add_argument('-we', '--wolf_initial_energy', type=int, default=40)
+    parser.add_argument('-seg', '--sheep_energy_from_grass', type=int, default=15)
+    parser.add_argument('-wes', '--wolf_energy_from_sheep', type=int, default=35)
+    parser.add_argument('-sel', '--sheep_energy_loss_per_turn', type=int, default=1)
+    parser.add_argument('-wel', '--wolf_energy_loss_per_turn', type=int, default=2)
+    parser.add_argument('-srt', '--sheep_reproduction_threshold', type=int, default=50)
+    parser.add_argument('-wrt', '--wolf_reproduction_threshold', type=int, default=80)
+    parser.add_argument('-rec', '--reproduction_energy_cost', type=int, default=20)
+    parser.add_argument('-sma', '--sheep_max_age', type=int, default=50)
+    parser.add_argument('-wma', '--wolf_max_age', type=int, default=40)
+    parser.add_argument('-ggp', '--grass_growth_probability', type=float, default=0.05)
+    parser.add_argument('-mt', '--max_turns', type=int, default=1000)
     return parser.parse_args()
 
-
-#classe qui gère la grille 
 class Grid:
-    """Classe représentant la grille de l'écosystème."""
     def __init__(self, size):
-        self.size=size
-        self.cells=[[{'grass':False, 'sheep':False, 'wolf':False} for _ in range(size)] for _ in range(size)]
+        self.size = size
+        self.cells = [[{'grass': False, 'sheep': False, 'wolf': False} for _ in range(size)] for _ in range(size)]
     
-    def radjacent(self,position):
-        """Renvoie une position adjacente aléatoire vide."""
-        (x,y)= position
-        adjacent_positions=[]
-        if x>0:
-            adjacent_positions.append((x-1,y))
-        if x<self.size-1:
-            adjacent_positions.append((x+1,y))
-        if y>0:
-            adjacent_positions.append((x,y-1))
-        if y<self.size-1:
-            adjacent_positions.append((x,y+1))
-        for pos in adjacent_positions:
-            if self.cells[pos[0]][pos[1]]['sheep'] or self.cells[pos[0]][pos[1]]['wolf']:
-                adjacent_positions.remove(pos)
-        return random.choice(adjacent_positions)
-    
+    def radjacent(self, position):
+        x, y = position
+        adj = []
+        for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < self.size and 0 <= ny < self.size:
+                if not self.cells[nx][ny]['sheep'] and not self.cells[nx][ny]['wolf']:
+                    adj.append((nx, ny))
+        return random.choice(adj) if adj else position
+
     def list_without_grass(self):
-        """Renvoie une liste de positions sans herbe."""
-        positions=[]
-        for x in range(self.size):
-            for y in range(self.size):
-                if not self.cells[x][y]['grass']:
-                    positions.append((x,y))
-        return positions
+        return [(x, y) for x in range(self.size) for y in range(self.size) if not self.cells[x][y]['grass']]
     
     def list_without_sheep(self):
-        positions=[]
-        for x in range(self.size):
-            for y in range(self.size):
-                if not self.cells[x][y]['sheep']:
-                    positions.append((x,y))
-        return positions
-    
+        return [(x, y) for x in range(self.size) for y in range(self.size) if not self.cells[x][y]['sheep']]
+
     def list_without_wolf(self):
-        """Renvoie une liste de positions sans loup."""
-        positions=[]
-        for x in range(self.size):
-            for y in range(self.size):
-                if not self.cells[x][y]['wolf']:
-                    positions.append((x,y))
-        return positions
+        return [(x, y) for x in range(self.size) for y in range(self.size) if not self.cells[x][y]['wolf']]
         
-    def has_grass(self,position):
-        """Vérifie si une position contient de l'herbe."""
-        (x,y)= position
-        return self.cells[x][y]['grass']
-    
-    def has_sheep(self,position):
-        """Vérifie si une position contient un mouton."""
-        (x,y)= position
-        return self.cells[x][y]['sheep']
-    
-    def has_wolf(self,position):
-        """Vérifie si une position contient un loup."""
-        (x,y)= position
-        return self.cells[x][y]['wolf']
-    
-    def remove_grass(self,position):
-        """Retire l'herbe d'une position."""
-        (x,y)= position
-        self.cells[x][y]['grass']=False
+    def has_grass(self, pos): return self.cells[pos[0]][pos[1]]['grass']
+    def has_sheep(self, pos): return self.cells[pos[0]][pos[1]]['sheep']
+    def has_wolf(self, pos): return self.cells[pos[0]][pos[1]]['wolf']
+    def remove_grass(self, pos): self.cells[pos[0]][pos[1]]['grass'] = False
+    def remove_sheep(self, pos): self.cells[pos[0]][pos[1]]['sheep'] = False
+    def remove_wolf(self, pos): self.cells[pos[0]][pos[1]]['wolf'] = False
+    def add_grass(self, pos): self.cells[pos[0]][pos[1]]['grass'] = True
+    def add_sheep(self, pos): self.cells[pos[0]][pos[1]]['sheep'] = True
+    def add_wolf(self, pos): self.cells[pos[0]][pos[1]]['wolf'] = True
 
-    def remove_sheep(self,position):
-        """Retire un mouton d'une position."""
-        (x,y)= position
-        self.cells[x][y]['sheep']=False
-    
-    def remove_wolf(self,position):
-        """Retire un loup d'une position."""
-        (x,y)= position
-        self.cells[x][y]['wolf']=False
-
-    def add_grass(self,position):
-        """Ajoute de l'herbe à une position."""
-        (x,y)= position
-        self.cells[x][y]['grass']=True
-
-    def add_sheep(self,position):
-        """Ajoute un mouton à une position."""
-        (x,y)= position
-        self.cells[x][y]['sheep']=True
-
-    def add_wolf(self,position):
-        """Ajoute un loup à une position."""
-        (x,y)= position
-        self.cells[x][y]['wolf']=True
-
-    
-#classe pour le comportement du mouton, son age, sa. position et son énergie 
 class Mouton:
     """Classe représentant un mouton dans l'écosystème."""
     def __init__(self, position, energie, age):
@@ -156,8 +74,9 @@ class Mouton:
         """Fait reproduire le mouton s'il a assez d'énergie."""
         if self.energie >= args.sheep_reproduction_threshold:
             self.energie -= args.reproduction_energy_cost
-            newposition = grid.radjacent(self.position)
-            return Mouton(newposition, args.sheep_initial_energy, 0)
+            new_pos = grid.radjacent(self.position)
+            if new_pos != self.position:
+                return Mouton(new_pos, args.sheep_initial_energy, 0)
         return None
     
     def manger(self,grid,args):
@@ -168,89 +87,50 @@ class Mouton:
             return (self.position,1)
         
     def deplacer(self, grid):
-        """Déplace le mouton vers une position adjacente contenant de l'herbe, ou aléatoirement si aucune herbe n'est adjacente."""
-        (x, y) = self.position
-        size = grid.size
-        # Détermine la nouvelle position
-        if x + 1 < size and grid.has_grass((x + 1, y)):
-            new_pos = (x + 1, y)
-        elif x - 1 >= 0 and grid.has_grass((x - 1, y)):
-            new_pos = (x - 1, y)
-        elif y + 1 < size and grid.has_grass((x, y + 1)):
-            new_pos = (x, y + 1)
-        elif y - 1 >= 0 and grid.has_grass((x, y - 1)):
-            new_pos = (x, y - 1)
-        else:
-            new_pos = grid.radjacent(self.position)
-        # Mise à jour de la grille
+        x, y = self.position
+        targets = []
+        for dx, dy in [(0,1),(0,-1),(1,0),(-1,0)]:
+            nx, ny = x+dx, y+dy
+            if 0 <= nx < grid.size and 0 <= ny < grid.size and grid.has_grass((nx, ny)):
+                targets.append((nx, ny))
+        
+        new_pos = random.choice(targets) if targets else grid.radjacent(self.position)
         grid.remove_sheep(self.position)
         self.position = new_pos
         grid.add_sheep(self.position)
 
-    def draw(self, screen) : 
-        """Dessine le mouton à sa position sur l'écran."""
-        pygame.draw.circle(screen, (240, 240, 240), (int(self.x), int(self.y)))
-        rect = self.wolf_img.get_rect(self.position)
-        screen.blit(self.wolf_img, rect) 
-
-#classe pour le comportement du loup, son age, sa position et son énergie
 class Loup:
     """Classe représentant un loup dans l'écosystème."""
     def __init__(self, position, energie, age):
-        self.position = position
-        self.energie = energie
-        self.age = age
+        self.position, self.energie, self.age = position, energie, age
 
     def deplacer(self, grid):
-        """Déplace le loup vers une position adjacente contenant un mouton, ou aléatoirement si aucun mouton n'est adjacent."""
-        (x, y) = self.position
-        size = grid.size
-        # Détermine la nouvelle position
-        if x + 1 < size and grid.has_sheep((x + 1, y)):
-            new_pos = (x + 1, y)
-        elif x - 1 >= 0 and grid.has_sheep((x - 1, y)):
-            new_pos = (x - 1, y)
-        elif y + 1 < size and grid.has_sheep((x, y + 1)):
-            new_pos = (x, y + 1)
-        elif y - 1 >= 0 and grid.has_sheep((x, y - 1)):
-            new_pos = (x, y - 1)
-        else:
-            new_pos = grid.radjacent(self.position)
-        # Mise à jour de la grille
         grid.remove_wolf(self.position)
-        self.position = new_pos
+        self.position = grid.radjacent(self.position)
         grid.add_wolf(self.position)
 
-    def mort(self, wolf_max_age):
-        """Vérifie si le loup est mort."""
-        return self.energie <= 0 or self.age > wolf_max_age
+    def mort(self, max_age):
+        return self.energie <= 0 or self.age > max_age
 
-    def reproduire(self, grid, wolf_reproduction_threshold, reproduction_energy_cost, wolf_initial_energy):
-        """Fait reproduire le loup s'il a assez d'énergie."""
-        if self.energie >= wolf_reproduction_threshold:
-            self.energie -= reproduction_energy_cost
-            newposition = grid.radjacent(self.position)
-            grid.add_wolf(newposition)
-            return Loup(newposition, wolf_initial_energy, 0)
+    def reproduire(self, grid, args):
+        if self.energie >= args.wolf_reproduction_threshold:
+            self.energie -= args.reproduction_energy_cost
+            new_pos = grid.radjacent(self.position)
+            if new_pos != self.position:
+                return Loup(new_pos, args.wolf_initial_energy, 0)
+        return None
 
     def chasser(self, grid, args):
-        """Le loup mange au plus un mouton adjacent par tour et se déplace sur sa case."""
-        (x, y) = self.position
-        size = grid.size
-        directions = [
-            (x + 1, y),
-            (x - 1, y),
-            (x, y + 1),
-            (x, y - 1)
-        ]
-        for nx, ny in directions:
-            if 0 <= nx < size and 0 <= ny < size and grid.has_sheep((nx, ny)):
+        x, y = self.position
+        for dx, dy in [(0,1),(0,-1),(1,0),(-1,0)]:
+            nx, ny = x+dx, y+dy
+            if 0 <= nx < grid.size and 0 <= ny < grid.size and grid.has_sheep((nx, ny)):
                 grid.remove_wolf(self.position)
                 grid.remove_sheep((nx, ny))
                 self.energie += args.wolf_energy_from_sheep
                 self.position = (nx, ny)
                 grid.add_wolf(self.position)
-                return (nx, ny)  # retourne la position du mouton mangé
+                return (nx, ny)
         return None
 
     def draw(self, screen) : 
@@ -277,130 +157,61 @@ class Grass:
 class Simulation: #Classe qui gère la simulation tour par tour
     """Classe gérant la simulation de l'écosystème."""
     def __init__(self, grid, args):
-        self.grid=grid
-        self.steps_max=args.max_turns
-        self.current_step=0
-        self.sheep=[]
-        self.wolves=[]
+        self.grid, self.args, self.current_step = grid, args, 0
+        self.sheep, self.wolves = [], []
+
+    def grid_init(self, args):
+        # Herbe
+        num_grass = int(args.initial_grass_coverage * (self.grid.size**2))
+        for _ in range(num_grass):
+            pos = (random.randint(0, self.grid.size-1), random.randint(0, self.grid.size-1))
+            self.grid.add_grass(pos)
+        # Moutons
+        for _ in range(args.initial_sheep):
+            pos = random.choice(self.grid.list_without_sheep())
+            self.sheep.append(Mouton(pos, args.sheep_initial_energy, 0))
+            self.grid.add_sheep(pos)
+        # Loups
+        for _ in range(args.initial_wolves):
+            pos = random.choice(self.grid.list_without_wolf())
+            self.wolves.append(Loup(pos, args.wolf_initial_energy, 0))
+            self.grid.add_wolf(pos)
+
+    def step(self):
+        self.current_step += 1
+        # 1. Age et Herbe
+        for a in self.sheep + self.wolves: a.age += 1
+        for _ in range(int(self.grid.size**2 * self.args.grass_growth_probability)):
+            pos = (random.randint(0, self.grid.size-1), random.randint(0, self.grid.size-1))
+            self.grid.add_grass(pos)
+
+        # 2. Moutons
+        for s in self.sheep:
+            s.deplacer(self.grid)
+            s.manger(self.grid, self.args)
+            s.energie -= self.args.sheep_energy_loss_per_turn
         
-    def grid_init(self,args):
-        #initialisation de l'herbe
-        coverage=0
-        while coverage < args.initial_grass_coverage: 
-            x=random.randint(0,self.grid.size-1)
-            y=random.randint(0,self.grid.size-1)
-            if not self.grid.cells[x][y]['grass']:
-                self.grid.add_grass((x,y))
-                coverage += 1/self.grid.size**2
-        for i in range(args.initial_sheep):
-                position=random.choice(self.grid.list_without_sheep())
-                new_sheep=Mouton(position,args.sheep_initial_energy,0)
-                self.sheep.append(new_sheep)
-                self.grid.add_sheep(position)
-        for i in range(args.initial_wolves):
-                position=random.choice(self.grid.list_without_wolf())
-                new_wolf=Loup(position,args.wolf_initial_energy,0)
-                self.wolves.append(new_wolf)
-                self.grid.add_wolf(position)
-        #initialisation des moutons
+        # 3. Loups
+        eaten_pos = []
+        for w in self.wolves:
+            res = w.chasser(self.grid, self.args)
+            if res: eaten_pos.append(res)
+            else: w.deplacer(self.grid)
+            w.energie -= self.args.wolf_energy_loss_per_turn
+        
+        self.sheep = [s for s in self.sheep if s.position not in eaten_pos]
 
-    def age(self):
-        """Incrémente l'âge des moutons et des loups."""
-        for sheep in self.sheep:
-            sheep.age += 1
-        for wolf in self.wolves:
-            wolf.age += 1
-    
-    def grass_growth(self,args,herbe_mangee=None):
-        """Fait pousser de l'herbe aléatoirement sur la grille."""
-        for x in range(self.grid.size):
-            for y in range(self.grid.size):
-                if not self.grid.cells[x][y]['grass']:
-                    if random.random() < args.grass_growth_probability :  # Probabilité de croissance de l'herbe
-                        self.grid.add_grass((x,y))
-        if herbe_mangee:
-            for herbe in herbe_mangee:
-                if herbe[1] == 7:
-                    self.grid.add_grass(herbe[0])
-                    herbe_mangee.remove(herbe)
-                else:
-                    herbe[1]+=1
-                                            
-    def action_sheep(self,args,herbe_mangee=None):
-        """Fait agir les moutons : déplacement, alimentation et perte d'énergie."""
-        if not herbe_mangee:
-            herbe_mangee=[]
-        for sheep in self.sheep:
-            sheep.deplacer(self.grid)
-            herbe_mangee.append(sheep.manger(self.grid,args))
-            sheep.energie -= args.sheep_energy_loss_per_turn
-        return herbe_mangee
-    
-    def action_wolves(self, args):
-        """Fait agir les loups : chasse, déplacement et perte d'énergie. Un loup ne mange qu'un mouton par tour et se déplace sur sa case."""
-        moutons_manges = set()
-        for wolf in self.wolves:
-            pos_mouton_mange = wolf.chasser(self.grid, args)
-            if pos_mouton_mange is not None:
-                moutons_manges.add(pos_mouton_mange)
-            else:
-                wolf.deplacer(self.grid)
-            wolf.energie -= args.wolf_energy_loss_per_turn
-        # Retirer les moutons mangés de la liste des moutons vivants (évite les moutons zombies)
-        self.sheep = [sheep for sheep in self.sheep if sheep.position not in moutons_manges]
+        # 4. Mort et Reproduction
+        self.sheep = [s for s in self.sheep if not s.mort(self.args)]
+        self.wolves = [w for w in self.wolves if not w.mort(self.args.wolf_max_age)]
+        
+        new_s = [baby for s in self.sheep if (baby := s.reproduire(self.grid, self.args))]
+        for b in new_s: self.grid.add_sheep(b.position)
+        self.sheep.extend(new_s)
 
-    def remove_dead(self, args):
-        """Retire les moutons et loups morts de la simulation."""
-        self.sheep = [sheep for sheep in self.sheep if not sheep.mort(args)]
-        self.wolves = [wolf for wolf in self.wolves if not wolf.mort(args.wolf_max_age)]
-
-    def reproduce(self,args):
-        """Fait reproduire les moutons et les loups."""
-        new_sheep = []
-        for sheep in self.sheep:
-            baby_sheep = sheep.reproduire(self.grid, args)
-            if baby_sheep is not None:
-                new_sheep.append(baby_sheep)
-        self.sheep = [s for s in self.sheep if s is not None]
-        self.sheep.extend(new_sheep)
-
-        new_wolves = []
-        for wolf in self.wolves:
-            baby_wolf = wolf.reproduire(
-                self.grid,
-                args.wolf_reproduction_threshold,
-                args.reproduction_energy_cost,
-                args.wolf_initial_energy
-            )
-            if baby_wolf is not None:
-                new_wolves.append(baby_wolf)
-        self.wolves = [w for w in self.wolves if w is not None]
-        self.wolves.extend(new_wolves)
-
-    #faire l'affichage
-    def step(self,args,herbe_mangee=None):
-        """Effectue un tour de la simulation."""
-        self.current_step+=1
-        self.age()
-        self.grass_growth(args,herbe_mangee)
-        herbe_mangee=self.action_sheep(args,herbe_mangee)
-        self.action_wolves(args)
-        self.remove_dead(args)
-        self.reproduce(args)
-        #self.affichage()
-        return herbe_mangee
-
-    def run(self, args):
-        """Lance la simulation jusqu'à la fin ou interruption."""
-        try:
-            herbe_mangee=self.step(args)
-            while self.current_step < self.steps_max:
-                if not self.sheep and not self.wolves:
-                    print("Tous les moutons et loups sont morts. Arrêt de la simulation.")
-                    break
-                herbe_mangee=self.step(args,herbe_mangee)
-        except KeyboardInterrupt:
-            print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
+        new_w = [baby for w in self.wolves if (baby := w.reproduire(self.grid, self.args))]
+        for b in new_w: self.grid.add_wolf(b.position)
+        self.wolves.extend(new_w)
 
     #DESSIN 
     def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
@@ -410,65 +221,44 @@ class Simulation: #Classe qui gère la simulation tour par tour
         for x in range(self.grid.size):
             for y in range(self.grid.size):
                 if self.grid.has_grass((x, y)):
-                    pygame.draw.rect(screen, (50, 200, 50),
-                                 (x*cell_size, y*cell_size, cell_size, cell_size))
-
-        # Dessiner les moutons
-        for sheep in self.sheep:
-            pos = sheep.position
-            rect = sheep_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
-                                          pos[1]*cell_size + cell_size//2))
-            screen.blit(sheep_img, rect)
-
-        # Dessiner les loups
-        for wolf in self.wolves:
-            pos = wolf.position
-            rect = wolf_img.get_rect(center=(pos[0]*cell_size + cell_size//2,
-                                            pos[1]*cell_size + cell_size//2))
-            screen.blit(wolf_img, rect)
-
-
+                    pygame.draw.rect(screen, (34, 139, 34), (x*cell_size, y*cell_size, cell_size-1, cell_size-1))
+        for s in self.sheep:
+            screen.blit(sheep_img, (s.position[0]*cell_size, s.position[1]*cell_size))
+        for w in self.wolves:
+            screen.blit(wolf_img, (w.position[0]*cell_size, w.position[1]*cell_size))
 
 if __name__ == "__main__":
     args = parse_args()
+    pygame.init()
+    
+    CELL_SIZE = 20
+    screen = pygame.display.set_mode((args.grid_size * CELL_SIZE, args.grid_size * CELL_SIZE))
+    pygame.display.set_caption("Simulation Vie Sauvage")
+    
+    # Chargement images avec fallback
+    try:
+        w_img = pygame.transform.scale(pygame.image.load("loup.jpeg"), (CELL_SIZE, CELL_SIZE))
+        s_img = pygame.transform.scale(pygame.image.load("mouton.jpeg"), (CELL_SIZE, CELL_SIZE))
+    except:
+        w_img = pygame.Surface((CELL_SIZE, CELL_SIZE)); w_img.fill((255, 0, 0))
+        s_img = pygame.Surface((CELL_SIZE, CELL_SIZE)); s_img.fill((255, 255, 255))
+
     grid = Grid(args.grid_size)
     sim = Simulation(grid, args)
     sim.grid_init(args)
-    print("Début de la simulation!")
-    for step in range(args.max_turns):
-        sim.step(args)
-        nb_sheep = len(sim.sheep)
-        nb_wolves = len(sim.wolves)
-        print(f"Tour {step+1}: moutons = {nb_sheep}, loups = {nb_wolves}")
-        if nb_sheep == 0 and nb_wolves == 0:
-            print("Tous les animaux sont morts. Fin de la simulation.")
-            break
-    print("Simulation terminée.")
-
-
-pygame.init()
-
-# Fenêtre
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Écosystème")
-
-clock = pygame.time.Clock()
-FPS = 60
-
-# Boucle principale
-running = True
-while running:
-    clock.tick(FPS)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    screen.fill((30, 30, 30))  # fond sombre
-
-    pygame.display.flip()
-
-
-pygame.quit()
-sys.exit()
+    
+    clock = pygame.time.Clock()
+    running = True
+    
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: running = False
+        
+        if len(sim.sheep) > 0 or len(sim.wolves) > 0:
+            sim.step()
+        
+        sim.draw(screen, CELL_SIZE, w_img, s_img)
+        pygame.display.flip()
+        clock.tick(10) # 10 tours par seconde
+        
+    pygame.quit()
