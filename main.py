@@ -151,6 +151,7 @@ class Mouton:
         if grid.has_grass(self.position):
             self.energie += args.sheep_energy_from_grass
             grid.remove_grass(self.position)
+            return (self.position,1)
     def deplacer(self, grid):
         (x, y) = self.position
         size = grid.size
@@ -279,18 +280,28 @@ class Simulation: #Classe qui gère la simulation tour par tour
         for wolf in self.wolves:
             wolf.age += 1
     
-    def grass_growth(self,args):
+    def grass_growth(self,args,herbe_mangee=None):
         for x in range(self.grid.size):
             for y in range(self.grid.size):
                 if not self.grid.cells[x][y]['grass']:
                     if random.random() < args.grass_growth_probability :  # Probabilité de croissance de l'herbe
                         self.grid.add_grass((x,y))
+        if herbe_mangee:
+            for herbe in herbe_mangee:
+                if herbe[1] == 7:
+                    self.grid.add_grass(herbe[0])
+                    herbe_mangee.remove(herbe)
+                else:
+                    herbe[1]+=1
                                             
-    def action_sheep(self,args):
-         for sheep in self.sheep:
+    def action_sheep(self,args,herbe_mangee=None):
+        if not herbe_mangee:
+            herbe_mangee=[]
+        for sheep in self.sheep:
             sheep.deplacer(self.grid)
-            sheep.manger(self.grid,args)
+            herbe_mangee.append(sheep.manger(self.grid,args))
             sheep.energie -= args.sheep_energy_loss_per_turn
+        return herbe_mangee
     
     def action_wolves(self, args):
         moutons_manges = set()
@@ -331,23 +342,25 @@ class Simulation: #Classe qui gère la simulation tour par tour
         self.wolves.extend(new_wolves)
 
     #faire l'affichage
-    def step(self,args):
+    def step(self,args,herbe_mangee=None):
         self.current_step+=1
         self.age()
-        self.grass_growth(args)
-        self.action_sheep(args)
+        self.grass_growth(args,herbe_mangee)
+        herbe_mangee=self.action_sheep(args,herbe_mangee)
         self.action_wolves(args)
         self.remove_dead(args)
         self.reproduce(args)
         #self.affichage()
+        return herbe_mangee
 
     def run(self, args):
         try:
+            herbe_mangee=self.step(args)
             while self.current_step < self.steps_max:
                 if not self.sheep and not self.wolves:
                     print("Tous les moutons et loups sont morts. Arrêt de la simulation.")
                     break
-                self.step(args)
+                herbe_mangee=self.step(args,herbe_mangee)
         except KeyboardInterrupt:
             print("\nSimulation interrompue par l'utilisateur (Ctrl+C).")
 
