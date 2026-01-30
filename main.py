@@ -1,4 +1,6 @@
-print("hello le hackaton")
+import numpy as np
+import random
+import argparse
 
 #Consignes : 
 #moutons broutent l'herbe
@@ -12,7 +14,6 @@ print("hello le hackaton")
 #loup : se déplace aléatoirement en priorité sur les cases avec des moutons, mange les moutons et gagne de l'énergie
 #énergie > seuil : se reproduit, perd 20 d'énergie et crée un loup sur une case adjacente
 
-import argparse
 
 def parse_args():
     parser=argparse.ArgumentParser(description="Simulation d'écosystème avec moutons, loups et herbe.")
@@ -34,6 +35,7 @@ def parse_args():
     parser.add_argument('-gp','--grass-growth-probability',type=float,default=0.08, help="Taux de croissance de l'herbe par tour")
     parser.add_argument('-t','--max-turns',type=int,default=500, help="Nombre maximum de tours de la simulation")
     return parser.parse_args()
+
 #config initiale
 GRID_SIZE = 30
 INITIAL_SHEEP= 50
@@ -64,8 +66,72 @@ GRASS_REGROWTH_TIME=7
 #simulation
 MAX_TURNS=500
 
+class Grid:
+    def __init__(self, size):
+        self.size=size
+        self.cells=[[{'grass':False, 'sheep':False, 'wolf':False} for _ in range(size)] for _ in range(size)]
+    
+    def radjacent(self,position):
+        (x,y)= position
+        adjacent_positions=[]
+        if x>0:
+            adjacent_positions.append((x-1,y))
+        if x<self.size-1:
+            adjacent_positions.append((x+1,y))
+        if y>0:
+            adjacent_positions.append((x,y-1))
+        if y<self.size-1:
+            adjacent_positions.append((x,y+1))
+        for pos in adjacent_positions:
+            if self.cells[pos[0]][pos[1]]['sheep'] == True or self.cells[pos[0]][pos[1]]['wolf'] == True:
+                adjacent_positions.remove(pos)
+        return random.choice(adjacent_positions)
+    
+    def list_without_grass(self):
+        positions=[]
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.cells[x][y]['grass']:
+                    positions.append((x,y))
+        return positions
+        
+    def has_grass(self,position):
+        (x,y)= position
+        return self.cells[x][y]['grass']
+    
+    def has_sheep(self,position):
+        (x,y)= position
+        return self.cells[x][y]['sheep']
+    
+    def has_wolf(self,position):
+        (x,y)= position
+        return self.cells[x][y]['wolf']
+    
+    def remove_grass(self,position):
+        (x,y)= position
+        self.cells[x][y]['grass']=False
 
+    def remove_sheep(self,position):
+        (x,y)= position
+        self.cells[x][y]['sheep']=False
+    
+    def remove_wolf(self,position):
+        (x,y)= position
+        self.cells[x][y]['wolf']=False
 
+    def add_grass(self,position):
+        (x,y)= position
+        self.cells[x][y]['grass']=True
+
+    def add_sheep(self,position):
+        (x,y)= position
+        self.cells[x][y]['sheep']=True
+
+    def add_wolf(self,position):
+        (x,y)= position
+        self.cells[x][y]['wolf']=True
+    
+    
 class Mouton(Grid):
     def __init__(self, position, energie, age):
         self.position = position
@@ -76,7 +142,9 @@ class Mouton(Grid):
     def reproduire(self):
         if self.energie >= SHEEP_REPRODUCTION_THRESHOLD:
             self.energie -= REPRODUCTION_ENERGY_COST
-            return Mouton(Grid.radjacent(self.position), SHEEP_INITIAL_ENERGY, 0)
+            newposition = Grid.radjacent(self.position)
+            Grid.add_sheep(newposition)
+            return Mouton(newposition, SHEEP_INITIAL_ENERGY, 0)
         return None
     def manger(self):
         if Grid.has_grass(self.position):
@@ -93,14 +161,7 @@ class Mouton(Grid):
         elif Grid.has_grass((x,y-1)):
             self.position = (x,y-1)
         else:
-        self.position = Grid.radjacent(self.position)
-
-
-
-    
-
-
-import random
+            self.position = Grid.radjacent(self.position)
 
 class Loup(Grid):
     def __init__(self, position, energie, age, taille_grille):
@@ -141,3 +202,18 @@ class Loup(Grid):
 
 
 
+class Grass():
+    def __init__(self, presence, x, y):
+        self.presence = presence
+        self.x = x
+        self.y = y 
+
+    # CHANGER EN FONCTION DU CODE DE LA GRILLE 
+    def __pousse_aléatoire__(self,GRASS_GROWTH_PROBABILITY):
+        x = np.randlist(Grid.list_without_grass())
+        y = np.random.radnt(0,100)
+        
+        self.x = x
+        self.y = y 
+        if self.presence == 0:
+            self.presence = np.random.binomial(1, GRASS_GROWTH_PROBABILITY)
