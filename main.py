@@ -217,11 +217,6 @@ class Simulation: #Classe qui gère la simulation tour par tour
     def draw_simulation(self, screen, cell_size, wolf_img, sheep_img):
         screen.fill((30, 30, 30))  # fond sombre
 
-
-        # Dessine un rectangle de fond
-        pygame.draw.rect(screen, (40, 40, 40), (10, 10, text.get_width() + 20, 40), border_radius=8)
-        screen.blit(text, (20, 20))
-
         # Dessiner l'herbe
         for x in range(self.grid.size):
             for y in range(self.grid.size):
